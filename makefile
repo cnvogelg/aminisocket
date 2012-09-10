@@ -12,3 +12,6 @@ clean:
 	rm -f bsdsocket.library
 	rm -f test_sock
 	rm -f *.o
+	
+install: all
+	cp test_sock bsdsocket.library shared/

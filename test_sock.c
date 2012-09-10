@@ -2,6 +2,7 @@
 #include "proto/dos.h"
 #include <stdio.h>
 #include <bsdsocket.h>
+#include <errno.h>
 
 struct Library *SocketBase;
 
@@ -13,6 +14,8 @@ int main()
         if (SocketBase)
         {   
             printf("Library Opened Sucessfully.\n");
+            
+            SetErrnoPtr(&errno, sizeof errno);
 
             sd = socket(AF_INET, SOCK_STREAM, 0);
             printf("sd=%d\n", sd);
