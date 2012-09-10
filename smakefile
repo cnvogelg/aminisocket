@@ -1,0 +1,32 @@
+# smakefile for bsdsocket.library on SAS C 6.58
+
+all: bsdsocket.library test_sock
+
+bsdsocket.o: bsdsocket.c
+	sc nostackcheck libcode debug line bsdsocket.c INCLUDEDIR netinclude:
+
+bsdsocket.library: bsdsocket.o 
+	slink with <<
+LIBFD bsdsocket.fd 
+LIBPREFIX _lib_
+to bsdsocket.library 
+FROM lib:libent.o lib:libinit.o bsdsocket.o 
+lib lib:sc.lib
+lib lib:debug.lib
+lib lib:amiga.lib
+noicons
+SD 
+libversion 2 librevision 3
+map
+<
+
+test_sock.o: test_sock.c
+	sc libcode nostackcheck debug line INCLUDEDIR netinclude: test_sock.c 
+
+test_sock: test_sock.o
+	slink with <<
+FROM LIB:c.o test_sock.o
+TO test_sock
+LIB LIB:sc.lib LIB:amiga.lib
+ADDSYM	
+<
