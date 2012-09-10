@@ -1,3 +1,4 @@
 *.o
 *.library
-
+test_sock
+shared
