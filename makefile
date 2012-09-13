@@ -1,8 +1,11 @@
 # Makefile for aminisocket
 
 all: bsdsocket.library test_sock
+
+SRCS=bsdsocket.c mininetdb.c
+HDRS=mininetdb.h
     
-bsdsocket.library: bsdsocket.c
+bsdsocket.library: $(SRCS) $(HDRS)
 	vamos smake bsdsocket.library
 
 test_sock: test_sock.c

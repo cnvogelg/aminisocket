@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include "debug.h"
+#include "mininetdb.h"
 
 __asm __saveds int lib_socket(register __d0 int domain, register __d1 int type, register __d2 int protocol )
 {
@@ -212,25 +213,25 @@ __asm __saveds struct netent * lib_getnetbyaddr(register __d0 long net, register
 __asm __saveds struct servent * lib_getservbyname(register __a0 const char * name, register __a1 const char * proto )
 {
     D(bug("getservbyname(%s,%s)\n", name, proto));
-    return NULL;
+    return mini_getservbyname(name, proto);
 }
 
 __asm __saveds struct servent * lib_getservbyport(register __d0 int port, register __a0 const char * proto )
 {
     D(bug("getservbyport(%ld,%s)\n", port, proto));
-    return NULL;
+    return mini_getservbyport(port, proto);
 }
 
 __asm __saveds struct protoent * lib_getprotobyname(register __a0 const char * name )
 {
     D(bug("getprotobyname(%s)\n", name));
-    return NULL;
+    return mini_getprotobyname(name);
 }
 
 __asm __saveds struct protoent * lib_getprotobynumber(register __d0 int proto )
 {
     D(bug("getprotobynumber(%ld)", proto));
-    return NULL;
+    return mini_getprotobynumber(proto);
 }
 
 __asm __saveds void lib_vsyslog(register __d0 int pri, register __a0 const char * msg, register __a1 LONG * args )

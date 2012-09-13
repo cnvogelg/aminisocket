@@ -2,15 +2,15 @@
 
 all: bsdsocket.library test_sock
 
-bsdsocket.o: bsdsocket.c
-	sc nostackcheck libcode debug line bsdsocket.c INCLUDEDIR netinclude:
+CFLAGS=nostackcheck libcode debug line INCLUDEDIR netinclude:
+OBJS=bsdsocket.o mininetdb.o
 
-bsdsocket.library: bsdsocket.o 
+bsdsocket.library: ${OBJS}
 	slink with <<
 LIBFD bsdsocket.fd 
 LIBPREFIX _lib_
 to bsdsocket.library 
-FROM lib:libent.o lib:libinit.o bsdsocket.o 
+FROM lib:libent.o lib:libinit.o ${OBJS}
 lib lib:sc.lib
 lib lib:debug.lib
 lib lib:amiga.lib
