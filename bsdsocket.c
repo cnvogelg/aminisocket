@@ -189,25 +189,25 @@ __asm __saveds unsigned long lib_inet_network(register __a0 const char * cp )
 __asm __saveds struct hostent * lib_gethostbyname(register __a0 const char * name )
 {
     D(bug("gethostbyname(%s)\n", name));
-    return NULL;
+    return mini_gethostbyname(name);
 }
 
 __asm __saveds struct hostent * lib_gethostbyaddr(register __a0 const char * addr, register __d0 int len, register __d1 int type )
 {
     D(bug("gethostbyaddr(%lx,%ld,%ld)\n", addr, len, type));
-    return NULL;
+    return mini_gethostbyaddr(addr,len,type);
 }
 
 __asm __saveds struct netent * lib_getnetbyname(register __a0 const char * name )
 {
     D(bug("getnetbyname(%s)\n", name));
-    return NULL;
+    return mini_getnetbyname(name);
 }
 
 __asm __saveds struct netent * lib_getnetbyaddr(register __d0 long net, register __d1 int type )
 {
     D(bug("getnetbyaddr(%ld,%ld)\n", net, type));
-    return NULL;
+    return mini_getnetbyaddr(net,type);
 }
 
 __asm __saveds struct servent * lib_getservbyname(register __a0 const char * name, register __a1 const char * proto )

@@ -4,6 +4,24 @@
 
 const static char *null = NULL;
 
+/* host adresses */
+const static char *localhost_addr[] = {
+    "\x7f\x00\x00\x01",
+    NULL
+};
+
+/* static table of hosts */
+const static struct hostent hosts[] = {
+    { "localhost", &null, AF_INET, 4, localhost_addr },
+    { NULL, &null, AF_INET, 4, &null }
+};
+
+/* static table of networks */
+const static struct netent networks[] = {
+    { "loopback", &null, AF_INET, 127 },
+    { NULL, &null, AF_INET, 0 }
+};
+
 /* static table of services */
 const static struct servent services[] = {
     { "ftp", &null, 21, "tcp" },
@@ -16,6 +34,63 @@ const static struct protoent protocols[] = {
     { "udp", &null, 17 },
     { NULL, &null, 0 }
 };
+
+struct hostent * mini_gethostbyname( const char * name )
+{
+    const struct hostent *h = hosts;
+    while(h->h_name != NULL) {
+        if(strcmp(h->h_name, name)==0) {
+            return h;
+        }
+        h++;
+    }
+    return NULL;
+}
+
+struct hostent * mini_gethostbyaddr( const char * addr, int len, int type )
+{
+    const struct hostent *h = hosts;
+    if((len != 4)||(type != AF_INET)) {
+        return NULL;
+    }
+    while(h->h_name != NULL) {
+        const char *haddr = h->h_addr_list[0];
+        if((haddr[0] == addr[0]) && (haddr[1] == addr[1]) && 
+           (haddr[2] == addr[2]) && (haddr[3] == addr[3])) {           
+            return h;
+        }
+        h++;
+    }
+    
+    return NULL;
+}
+
+struct netent * mini_getnetbyname( const char * name )
+{
+    const struct netent *n = networks;
+    while(n->n_name != NULL) {
+        if(strcmp(n->n_name, name)==0) {
+            return n;
+        }
+        n++;
+    }
+    return NULL;
+}
+
+struct netent * mini_getnetbyaddr( long net, int type )
+{
+    const struct netent *n = networks;
+    if(type != AF_INET) {
+        return NULL;
+    }
+    while(n->n_name != NULL) {
+        if(n->n_net == type) {
+            return n;
+        }
+        n++;
+    }
+    return NULL;
+}
 
 struct servent * mini_getservbyname(const char * name, const char * proto)
 {
