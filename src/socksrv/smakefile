@@ -1,0 +1,15 @@
+# smakefile for test programs
+
+all: bsdsocket.library test_sock
+
+CFLAGS=nostackcheck debug line INCLUDEDIR netinclude:
+OBJS=socksrv.o pardrv.o parirq.o
+TARGET=socksrv
+
+${TARGET}: ${OBJS}
+	slink with <<
+FROM LIB:c.o ${OBJS}
+TO ${TARGET}
+LIB LIB:sc.lib LIB:amiga.lib
+ADDSYM	
+<

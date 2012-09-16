@@ -2,8 +2,8 @@
 BASE_DIR=..
 include $(BASE_DIR)/common.mk
 
-TARGET=test_sock
-SRCS=test_sock.c
+TARGET=socksrv
+SRCS=socksrv.c pardrv.c parirq.asm
 HDRS=
     
 all: $(TARGET)
