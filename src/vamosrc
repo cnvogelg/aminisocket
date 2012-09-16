@@ -1,0 +1,23 @@
+# vamos config file for amininet build
+
+[volumes]
+wb310=${WB_PATH}
+sc=${SC_PATH}
+net=${NETSDK_PATH}
+
+[assigns]
+include=sc:include
+lib=sc:lib
+t=root:tmp
+c=wb310:c
+netinclude=net:netinclude
+netlib=net:netlib
+includeasm=sc:include
+libs=+cur:
+
+[path]
+path=sc:c,wb310:c
+
+[vamos]
+quiet=True
+ram_size=2048

@@ -1,0 +1,13 @@
+# smakefile for test programs
+
+all: bsdsocket.library test_sock
+
+CFLAGS=nostackcheck debug line INCLUDEDIR netinclude:
+
+test_sock: test_sock.o
+	slink with <<
+FROM LIB:c.o test_sock.o
+TO test_sock
+LIB LIB:sc.lib LIB:amiga.lib
+ADDSYM	
+<
