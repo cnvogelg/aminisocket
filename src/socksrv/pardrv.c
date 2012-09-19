@@ -11,12 +11,15 @@ __far volatile struct CIA ciaa,ciab;
 
 static int alloc_flags = 0;
 static char *name = "pardrv";
-static struct Library *cia_base;
+struct Library *cia_base;
 struct Library *MiscBase;
 static struct Interrupt irq;
 
 struct state_s {
-    UWORD flags;
+    UWORD     s_Flags;
+    ULONG     s_IntSigMask;
+    struct Library * s_SysBase;
+    struct Process * s_ServerTask;
 };
 static struct state_s state;
 

@@ -3,10 +3,11 @@
 all: bsdsocket.library test_sock
 
 CFLAGS=nostackcheck debug line INCLUDEDIR netinclude:
-OBJS=socksrv.o pardrv.o parirq.o
+OBJS=socksrv.o pardrv.o parirq.o crc16.o timer.o
+HDRS=timer.h drv.h
 TARGET=socksrv
 
-${TARGET}: ${OBJS}
+${TARGET}: ${OBJS} ${HDRS}
 	slink with <<
 FROM LIB:c.o ${OBJS}
 TO ${TARGET}
