@@ -11,6 +11,9 @@ static APTR oldExceptData;
 static UBYTE timeoutFlag;
 static struct Task *myTask;
 
+static struct MsgPort *tickPort;
+static struct timerequest tickReq;
+
 static ULONG __asm __saveds exceptcode(register __d0 ULONG sigmask, register __a1 UBYTE *flag)
 {
     /* remove the I/O Block from the port */
@@ -31,6 +34,12 @@ int timer_init(void)
         return -1;
     }
     
+    /* create port for tick replies */
+    tickPort = CreatePort(NULL,0);
+    if(tickPort == NULL) {
+        return -1;
+    }
+    
     /* timer.device */
     if (OpenDevice("timer.device", UNIT_MICROHZ, (struct IORequest*)&timeoutReq, 0))
     {
@@ -41,6 +50,13 @@ int timer_init(void)
     timeoutReq.tr_node.io_Command = TR_ADDREQUEST;
     TimerBase = (struct Library *)timeoutReq.tr_node.io_Device;
     timeoutFlag = 0xff;
+    
+    /* clone request */
+    tickReq.tr_node.io_Flags = IOF_QUICK;
+    tickReq.tr_node.io_Message.mn_ReplyPort = tickPort;
+    tickReq.tr_node.io_Command = TR_ADDREQUEST;
+    tickReq.tr_node.io_Device = timeoutReq.tr_node.io_Device;
+    tickReq.tr_node.io_Unit = timeoutReq.tr_node.io_Unit;
     
     /* set exception for timer signal */
     myTask = FindTask(NULL);
@@ -73,13 +89,18 @@ void timer_shutdown(void)
         CloseDevice((struct IORequest*)&timeoutReq);
     }
 
+    /* close tick port */
+    if(tickPort != NULL) {
+        DeletePort(tickPort);
+    }
+    
     /* close port */
     if(timeoutPort != NULL) {
         DeletePort(timeoutPort);
     }
 }
 
-volatile UBYTE * timer_start(ULONG timeout)
+volatile UBYTE * timer_timeout_start(ULONG timeout)
 {
     while(!timeoutFlag) Delay(1L);
     timeoutReq.tr_time.tv_secs = 0;
@@ -89,8 +110,26 @@ volatile UBYTE * timer_start(ULONG timeout)
     return &timeoutFlag;
 }
 
-void timer_clear(void)
+void timer_timeout_clear(void)
 {
     AbortIO((struct IORequest*)&timeoutReq);
+}
+
+ULONG timer_tick_mask(void)
+{
+    return 1UL << tickPort->mp_SigBit;
+}
+
+void timer_tick_start(ULONG timeout)
+{
+    tickReq.tr_time.tv_secs    = 0;
+    tickReq.tr_time.tv_micro   = timeout;
+    SendIO((struct IORequest*)&tickReq);
+}
+
+void timer_tick_clear(void)
+{
+    AbortIO((struct IORequest*)&timeoutReq);
+    WaitIO((struct IORequest*)&timeoutReq);
 }
 

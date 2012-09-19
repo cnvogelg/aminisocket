@@ -19,29 +19,32 @@ static void cleanup(void)
     timer_shutdown();
 }
 
+#define TICK_DELAY 500000
+
 static void main_loop(void)
 {
     BOOL running = TRUE;
     ULONG sigMask = SIGBREAKF_CTRL_F | SIGBREAKF_CTRL_C;
-    
-    // test
-    volatile UBYTE *flag = timer_start(500);
-    printf("flag %02x\n", (int)*flag);
-    
+    ULONG tickMask = timer_tick_mask();
+
+    sigMask |= tickMask;
+    timer_tick_start(TICK_DELAY);
     while(running) {
         ULONG sigGot = 0;
         sigGot = Wait(sigMask);
-                
         
+        /* tick timer */
+        if(sigGot & tickMask) {
+            puts("tick");
+            timer_tick_start(TICK_DELAY);
+        }
         
+        /* user break */
         if(sigGot & SIGBREAKF_CTRL_C) {
             running = FALSE;
         }
     }
-    
-    printf("flag %02x\n", (int)*flag);
-    timer_clear();
-    
+    timer_tick_clear();
 }
 
 int main()
