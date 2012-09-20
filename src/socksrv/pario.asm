@@ -97,7 +97,7 @@ SYNCWORD_NOCRC   equ     ((SYNCBYTE_HEAD<<8)|SYNCBYTE_NOCRC)
 ;     transmission and writes the first byte to our port.
 ;
 ;     We recognise this here and propagate the information to the server
-;     task by Signal()ing it and by setting the PLIPB_RECEIVING bit
+;     task by Signal()ing it and by setting the FLAGS_BIT_RX bit
 ;     in the flags field.
 ;
 _interrupt:
@@ -111,7 +111,7 @@ _interrupt:
 
     bset    #FLAGS_BIT_RX,s_Flags(a1)
     move.l  s_IntSigMask(a1),d0
-    movea.l s_SysBase(a1),a6       ; Signal
+    movea.l s_SysBase(a1),a6       ; Signal task
     movea.l s_ServerTask(a1),a1
     JSRLIB  Signal
 skipint: 

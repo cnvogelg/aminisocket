@@ -19,7 +19,7 @@ static void cleanup(void)
     timer_shutdown();
 }
 
-#define TICK_DELAY 500000
+#define TICK_DELAY 5000000
 
 static void main_loop(void)
 {

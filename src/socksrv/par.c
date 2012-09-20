@@ -84,10 +84,11 @@ int par_init(void)
                     irq.is_Node.ln_Type = NT_INTERRUPT;
                     irq.is_Node.ln_Pri  = 127;
                     irq.is_Node.ln_Name = name;
-                    irq.is_Data         = (APTR)NULL;
+                    irq.is_Data         = (APTR)&state;
                     irq.is_Code         = (VOID (*)())&interrupt;
 
                     Disable();
+                    /* add an interrupt handler for FLAG = ACK */
                     if (!AddICRVector(cia_base, CIAICRB_FLG, &irq))
                     {
                         DISABLEINT;
@@ -95,14 +96,19 @@ int par_init(void)
                     }
                     Enable();
 
-                    if (err = 0) {
+                    /* finish setting up interrupt handler */
+                    if (err == 0) {
                         alloc_flags |= 4;
+                        
+                        /* setup line */
                         PARINIT;
                         CLEARREQUEST;
+                        
+                        /* irq setup */
                         CLEARINT;
                         ENABLEINT;
                     }
-                }
+                }    
             }
         }
     }
@@ -115,9 +121,9 @@ void par_shutdown(void)
         FreeSignal(intSig);
     }
     if (alloc_flags & 4) {
-       DISABLEINT;
-       CLEARINT;
-       RemICRVector(cia_base, CIAICRB_FLG, &irq);
+        DISABLEINT;
+        CLEARINT;
+        RemICRVector(cia_base, CIAICRB_FLG, &irq);
     }
     if (alloc_flags & 2) {
         FreeMiscResource(MR_PARALLELBITS);
