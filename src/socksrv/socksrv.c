@@ -26,13 +26,19 @@ static void main_loop(void)
     BOOL running = TRUE;
     ULONG sigMask = SIGBREAKF_CTRL_F | SIGBREAKF_CTRL_C;
     ULONG tickMask = timer_tick_mask();
+    ULONG rxMask = drv_get_rx_sig_mask();
 
-    sigMask |= tickMask;
+    sigMask |= tickMask | rxMask;
     timer_tick_start(TICK_DELAY);
     while(running) {
         ULONG sigGot = 0;
         sigGot = Wait(sigMask);
         
+        /* rx signal */
+        if(sigGot & rxMask) {
+            puts("rx");
+        }
+
         /* tick timer */
         if(sigGot & tickMask) {
             puts("tick");

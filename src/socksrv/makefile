@@ -3,8 +3,8 @@ BASE_DIR=..
 include $(BASE_DIR)/common.mk
 
 TARGET=socksrv
-SRCS=socksrv.c pardrv.c parirq.asm crc16.asm timer.c
-HDRS=timer.h drv.h
+SRCS=socksrv.c pardrv.c par.c pario.asm crc16.asm timer.c
+HDRS=timer.h drv.h par.h
     
 all: $(TARGET)
 

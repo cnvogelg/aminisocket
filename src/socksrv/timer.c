@@ -8,8 +8,8 @@ static struct Library *TimerBase;
 static ULONG oldExcept;
 static APTR oldExceptCode;
 static APTR oldExceptData;
-static UBYTE timeoutFlag;
 static struct Task *myTask;
+static UBYTE timeoutFlag;
 
 static struct MsgPort *tickPort;
 static struct timerequest tickReq;
@@ -100,14 +100,19 @@ void timer_shutdown(void)
     }
 }
 
-volatile UBYTE * timer_timeout_start(ULONG timeout)
+void timer_timeout_set_flag_ptr(UBYTE *flag)
+{
+    myTask->tc_ExceptData = (APTR)flag;
+    *flag = 0xff;
+}
+
+void timer_timeout_start(ULONG timeout)
 {
     while(!timeoutFlag) Delay(1L);
     timeoutReq.tr_time.tv_secs = 0;
     timeoutReq.tr_time.tv_micro = timeout;
     timeoutFlag = 0;
     SendIO((struct IORequest*)&timeoutReq);
-    return &timeoutFlag;
 }
 
 void timer_timeout_clear(void)

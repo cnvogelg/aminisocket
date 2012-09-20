@@ -6,7 +6,8 @@
 extern int timer_init(void);
 extern void timer_shutdown(void);
 
-extern volatile UBYTE *timer_timeout_start(ULONG timeout);
+extern void timer_timeout_set_flag_ptr(UBYTE *flag);
+extern void timer_timeout_start(ULONG timeout);
 extern void timer_timeout_clear(void);
 
 extern ULONG timer_tick_mask(void);

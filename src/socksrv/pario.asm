@@ -27,6 +27,7 @@
     ULONG     s_IntSigMask
     APTR      s_SysBase
     APTR      s_ServerTask
+    UBYTE     s_TimeOut
     LABEL     state_SIZE
     
     ; ----- packet_s structure -----
@@ -44,9 +45,9 @@ TRUE  equ 1
 FALSE equ 0
     ENDC
     
-    ; ----- flags -----
-BIT_RX  equ 1
-BIT_ACK equ 2
+    ; ----- state_s s_Flags -----
+FLAGS_BIT_RX  equ 1
+FLAGS_BIT_ACK equ 2
 
 BIT_PTYPE_CRC equ 15 ; crc flag in p_Type
     
@@ -100,7 +101,7 @@ SYNCWORD_NOCRC   equ     ((SYNCBYTE_HEAD<<8)|SYNCBYTE_NOCRC)
 ;     in the flags field.
 ;
 _interrupt:
-    btst    #BIT_RX,(a1)  
+    btst    #FLAGS_BIT_RX,s_Flags(a1)  
     bne.s   setack          
 
     move.b  StatusReg,d0            ; PAR_STATUS==CIAF_PRTRPOUT ? 
@@ -108,7 +109,7 @@ _interrupt:
     cmp.b   #2,d0   
     bne.s   skipint
 
-    bset    #BIT_RX,(a1)
+    bset    #FLAGS_BIT_RX,s_Flags(a1)
     move.l  s_IntSigMask(a1),d0
     movea.l s_SysBase(a1),a6       ; Signal
     movea.l s_ServerTask(a1),a1
@@ -116,8 +117,8 @@ _interrupt:
 skipint: 
     moveq #0,d0                     ; set Z flag => next server
     rts
-setack: ; already in RX mode...
-    bset  #BIT_ACK,(a1)
+setack:                             ; already in RX mode...
+    bset  #FLAGS_BIT_ACK,s_Flags(a1)
     moveq #0,d0                     ; set Z flag => next server
     rts
     
@@ -127,7 +128,7 @@ setack: ; already in RX mode...
 ;     hwsend() - low level send routine
 ;
 ; SYNOPSIS
-;     void hwsend(struct packet_s *, UBYTE *timeOut)
+;     void hwsend(struct packet_s *, struct state_s *)
 ;                  A0                A1
 ;
 ; FUNCTION
@@ -136,12 +137,12 @@ setack: ; already in RX mode...
 _hwsend:
      movem.l  d2-d7/a2-a6,-(sp)
      move.l   a0,a4                               ; a4 = packet_s
-     move.l   a1,a2                               ; a2 = *timeOut
+     move.l   a1,a2                               ; a2 = state_s
      moveq    #FALSE,d2                           ; d2 = return value
      moveq    #0,d3
      move.l   d3,d4
-     moveq    #HS_REQUEST,d3   ; d3 = HS_REQUEST
-     moveq    #HS_LINE,d4      ; d4 = HS_LINE
+     moveq    #HS_REQUEST,d3                      ; d3 = HS_REQUEST
+     moveq    #HS_LINE,d4                         ; d4 = HS_LINE
 
      ;
      ; CRC wanted ?
@@ -178,7 +179,7 @@ hww_LoopShake1:
      eor.b    d7,d0
      btst     d4,d0                               ; WAITINPUTTOGGLE
      bne.s    hww_cont1
-     tst.b    (a2)                                ; a2 = *timeOut
+     tst.b    s_TimeOut(a2)                       ; check time out
      beq.s    hww_LoopShake1
      bra.s    hww_TimedOut
 hww_cont1:
@@ -192,7 +193,7 @@ hww_LoopShake2:
      eor.b    d7,d0
      btst     d4,d0                               ; WAITINPUTTOGGLE
      bne.s    hww_cont2
-     tst.b    (a2)                                ; a2 = *timeOut
+     tst.b    s_TimeOut(a2)                       ; check time out
      beq.s    hww_LoopShake2
      bra.s    hww_TimedOut
 hww_cont2:
@@ -218,7 +219,7 @@ hww_TimedOut:
 ;     hwrecv() - low level receive routine
 ;
 ; SYNOPSIS
-;     void hwrecv(struct packet_s *, UBYTE *timeOut)
+;     void hwrecv(struct packet_s *, struct state_s *)
 ;                 A0                 A1
 ;
 ; FUNCTION
@@ -227,7 +228,7 @@ hww_TimedOut:
 _hwrecv:
      movem.l  d2-d7/a2-a6,-(sp)
      move.l   a0,a4                               ; a4 = packet
-     move.l   a1,a2                               ; a2 = *timeOut
+     move.l   a1,a2                               ; a2 = state
      moveq    #FALSE,d5                           ; d5 = return value
      move.l   _cia_base,a6                        ; a6 = CIABase
      moveq    #0,d3
@@ -250,7 +251,7 @@ hwr_LoopShake1:
      eor.b    d7,d0
      btst     d2,d0                               ; WAITINPUTTOGGLE
      bne.s    hwr_cont1
-     tst.b    (a2)                                ; a2 = *timeOut
+     tst.b    s_TimeOut(a2)                       ; check time out
      beq.s    hwr_LoopShake1
      bra      hwr_TimedOut
 hwr_cont1:
@@ -271,7 +272,7 @@ hwr_LoopShake2:
      eor.b    d7,d0
      btst     d2,d0                               ; WAITINPUTTOGGLE
      bne.s    hwr_cont2
-     tst.b    (a2)                                ; a2 = *timeOut
+     tst.b    s_TimeOut(a2)                       ; check time out
      beq.s    hwr_LoopShake2
      bra.s    hwr_TimedOut
 hwr_cont2:
@@ -286,7 +287,7 @@ hwr_LoopShake3:
      eor.b    d7,d0
      btst     d2,d0                               ; WAITINPUTTOGGLE
      bne.s    hwr_cont3
-     tst.b    (a2)                                ; *timeOut
+     tst.b    s_TimeOut(a2)                       ; check time out
      beq.s    hwr_LoopShake3
      bra.s    hwr_TimedOut
 hwr_cont3:
