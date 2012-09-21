@@ -1,0 +1,17 @@
+#!/usr/bin/env python2.7
+
+import vpar
+import pkt
+
+ctl_name = "/tmp/vctl"
+dat_name = "/tmp/vdat"
+
+vpar = vpar.VPar(ctl_name, dat_name)
+pkt = pkt.Pkt(vpar)
+
+# send a packet
+ok = pkt.send("wow!");
+print "send",ok
+
+vpar.close()
+
