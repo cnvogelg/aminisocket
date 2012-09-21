@@ -109,7 +109,7 @@ void timer_timeout_set_flag_ptr(UBYTE *flag)
 void timer_timeout_start(ULONG timeout)
 {
     //while(!timeoutFlag) Delay(1L);
-    timeoutReq.tr_time.tv_secs = 0;
+    timeoutReq.tr_time.tv_secs = 5;
     timeoutReq.tr_time.tv_micro = timeout;
     *timeoutFlag = 0;
     SendIO((struct IORequest*)&timeoutReq);

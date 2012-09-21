@@ -57,8 +57,8 @@ ciab     equ     $bfd000
 OutReg   equ     ciaa+ciaprb
 StatusReg equ    ciab+ciapra
 
-HS_LINE equ CIAB_PRTRPOUT
-HS_REQUEST equ CIAB_PRTRBUSY
+HS_REQUEST equ CIAB_PRTRPOUT
+HS_LINE    equ CIAB_PRTRBUSY
 
 SETSELECT MACRO
       bset     #CIAB_PRTRSEL,StatusReg   ; raise PRTSEL line
@@ -239,7 +239,8 @@ _hwrecv:
 
      moveq    #CIAICRF_FLG,d0
      JSRLIB   AbleICR                             ; DISABLEINT
-     SETSELECT
+     
+     SETSELECT                                    ; set SEL to mark entering recv loop
 
      move.b   (a5),d7                             ; SAMPLEINPUT
      cmp.b    #SYNCBYTE_HEAD,OutReg               ; READCIABYTE
@@ -263,6 +264,7 @@ hwr_cont1:
      bcs.s    hwr_TimedOut
      subq.b   #SYNCBYTE_NOCRC,d0
      bcc.s    hwr_TimedOut
+     
      lea      p_Size(a4),a3
 
      ; Read 1st length byte
@@ -303,7 +305,8 @@ hwr_cont3:
      ;cmp.w    pb_MTU+2(a2),d6
      ;bhi.s    hwr_TimedOut
      ;addq.w   #PKTFRAMESIZE_2-1,d6
-     addq.w    #4,d6                              ; CRC + Type
+     ;addq.w    #4,d6                              ; CRC + Type
+     subq.w    #1,d6
 
      ; Read main packet body
      ;
@@ -313,7 +316,7 @@ hwr_LoopShake4:
      eor.b    d7,d0
      btst     d2,d0
      bne.s    hwr_cont4
-     tst.b    (a2)                                ; a2 = *timeOut
+     tst.b    s_TimeOut(a2)                       ; a2 = *timeOut
      beq.s    hwr_LoopShake4
      bra.s    hwr_TimedOut
 hwr_cont4:
@@ -325,6 +328,8 @@ hwr_cont4:
 hwr_DoneRead:
      subq.b   #SYNCBYTE_CRC,d4
      bne.s    hwr_ReadOkay
+
+     ; do CRC check
      lea      packet_SIZE(a4),a0
      move.w   p_Size(a4),d0
      ;subq.w   #PKTFRAMESIZE_2,d0
@@ -338,11 +343,13 @@ hwr_TimedOut:
      bclr     #FLAGS_BIT_RX,s_Flags(a2)
      
      SETCIAINPUT
+     
      bclr     d3,(a5)                             ; CLEARREQUEST StatusReg
      moveq    #CIAICRF_FLG,d0
      JSRLIB   SetICR                              ; CLEARINT
      move.w   #CIAICRF_FLG|CIAICRF_SETCLR,d0
      JSRLIB   AbleICR                             ; ENABLEINT
+     
      CLRSELECT
 
      move.l   d5,d0                               ; return value

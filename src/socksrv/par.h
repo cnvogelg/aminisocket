@@ -21,7 +21,6 @@ struct packet_s {
     UWORD     p_Sync;
     UWORD     p_Size;
     UWORD     p_CRC;
-    UWORD     p_Type;
 };
 
 extern int par_init(void);

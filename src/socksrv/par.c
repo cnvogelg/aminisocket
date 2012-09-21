@@ -10,8 +10,8 @@
 
 /* external asm functions from pario.asm */
 extern __asm void interrupt(register __a1 struct state_s *state);
-extern __asm BOOL hwsend(register __a0 struct packet_s *packet, register __a1 struct state_s *state);
-extern __asm BOOL hwrecv(register __a0 struct packet_s *packet, register __a1 struct state_s *state);
+extern __asm int hwsend(register __a0 struct packet_s *packet, register __a1 struct state_s *state);
+extern __asm int hwrecv(register __a0 struct packet_s *packet, register __a1 struct state_s *state);
 
 extern struct Library *SysBase;
 
@@ -27,8 +27,8 @@ static struct state_s state;
 static ULONG txTimeOut = 500000UL;
 static ULONG rxTimeOut = 500000UL;
 
-#define HS_LINE         CIAF_PRTRPOUT
-#define HS_REQUEST      CIAF_PRTRBUSY
+#define HS_REQUEST      CIAF_PRTRPOUT
+#define HS_LINE         CIAF_PRTRBUSY
 
 #define SETCIAOUTPUT    ciab.ciapra |= CIAF_PRTRSEL; ciaa.ciaddrb = 0xFF
 #define SETCIAINPUT     ciab.ciapra &= ~CIAF_PRTRSEL; ciaa.ciaddrb = 0x00
@@ -172,6 +172,7 @@ int par_recv(struct packet_s *pkt)
     
     timer_timeout_start(rxTimeOut);
     err = hwrecv(pkt, &state);
+    printf("size: %d\n", pkt->p_Size);
     timer_timeout_clear();
     return err;
 }
