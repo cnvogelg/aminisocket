@@ -1,6 +1,8 @@
 #include "par.h"
 #include "drv.h"
 
+static char pkt_data[256];
+
 int drv_init(void)
 {
     return par_init();
@@ -14,4 +16,11 @@ void drv_shutdown(void)
 ULONG drv_get_rx_sig_mask(void)
 {
     return par_get_rx_sig_mask();
+}
+
+void drv_handle_rx(void)
+{    
+    struct packet_s *pkt = (struct packet_s *)pkt_data;
+    int status = par_recv(pkt);
+    printf("recv: %d\n", status);
 }

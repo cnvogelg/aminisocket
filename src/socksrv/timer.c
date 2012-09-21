@@ -9,7 +9,7 @@ static ULONG oldExcept;
 static APTR oldExceptCode;
 static APTR oldExceptData;
 static struct Task *myTask;
-static UBYTE timeoutFlag;
+static volatile UBYTE *timeoutFlag;
 
 static struct MsgPort *tickPort;
 static struct timerequest tickReq;
@@ -49,7 +49,6 @@ int timer_init(void)
     timeoutReq.tr_node.io_Message.mn_ReplyPort = timeoutPort;
     timeoutReq.tr_node.io_Command = TR_ADDREQUEST;
     TimerBase = (struct Library *)timeoutReq.tr_node.io_Device;
-    timeoutFlag = 0xff;
     
     /* clone request */
     tickReq.tr_node.io_Flags = IOF_QUICK;
@@ -64,7 +63,7 @@ int timer_init(void)
     oldExceptCode = myTask->tc_ExceptCode;
     oldExceptData = myTask->tc_ExceptData;
     myTask->tc_ExceptCode = (APTR)&exceptcode;
-    myTask->tc_ExceptData = (APTR)&timeoutFlag;
+    myTask->tc_ExceptData = (APTR)NULL; /* will be set later */
     sigmask = 1L << timeoutPort->mp_SigBit;
     SetSignal(0, sigmask);
     SetExcept(sigmask, sigmask);
@@ -102,16 +101,17 @@ void timer_shutdown(void)
 
 void timer_timeout_set_flag_ptr(UBYTE *flag)
 {
+    timeoutFlag = flag;
     myTask->tc_ExceptData = (APTR)flag;
     *flag = 0xff;
 }
 
 void timer_timeout_start(ULONG timeout)
 {
-    while(!timeoutFlag) Delay(1L);
+    //while(!timeoutFlag) Delay(1L);
     timeoutReq.tr_time.tv_secs = 0;
     timeoutReq.tr_time.tv_micro = timeout;
-    timeoutFlag = 0;
+    *timeoutFlag = 0;
     SendIO((struct IORequest*)&timeoutReq);
 }
 

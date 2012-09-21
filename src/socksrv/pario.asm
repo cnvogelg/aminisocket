@@ -318,7 +318,7 @@ hwr_LoopShake4:
      bra.s    hwr_TimedOut
 hwr_cont4:
      eor.b    d0,d7
-     move.b   OutReg,(a3)+                   ; READCIABYTE
+     move.b   OutReg,(a3)+                        ; READCIABYTE
      bchg     d3,(a5)                             ; OUTPUTTOGGLE StatusReg
      dbra     d6,hwr_MainLoop
 
@@ -335,8 +335,7 @@ hwr_DoneRead:
 hwr_ReadOkay:
      moveq    #TRUE,d5
 hwr_TimedOut:
-     ; TODO: clear flag 
-     ;bclr     #PLIPB_RECEIVING,pb_Flags(a2)
+     bclr     #FLAGS_BIT_RX,s_Flags(a2)
      
      SETCIAINPUT
      bclr     d3,(a5)                             ; CLEARREQUEST StatusReg

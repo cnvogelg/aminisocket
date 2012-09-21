@@ -24,8 +24,8 @@ struct Library *cia_base;
 struct Library *MiscBase;
 static struct Interrupt irq;
 static struct state_s state;
-static ULONG txTimeOut = 10000;
-static ULONG rxTimeOut = 10000;
+static ULONG txTimeOut = 500000UL;
+static ULONG rxTimeOut = 500000UL;
 
 #define HS_LINE         CIAF_PRTRPOUT
 #define HS_REQUEST      CIAF_PRTRBUSY
@@ -165,10 +165,10 @@ int par_send(struct packet_s *pkt)
     }
     return err;
 }    
-    
+
 int par_recv(struct packet_s *pkt)
 {
-    int err;
+    int err = 0;
     
     timer_timeout_start(rxTimeOut);
     err = hwrecv(pkt, &state);

@@ -37,6 +37,7 @@ static void main_loop(void)
         /* rx signal */
         if(sigGot & rxMask) {
             puts("rx");
+            drv_handle_rx();
         }
 
         /* tick timer */

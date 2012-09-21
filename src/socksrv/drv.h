@@ -11,5 +11,6 @@
 extern int drv_init(void);
 extern void drv_shutdown(void);
 extern ULONG drv_get_rx_sig_mask(void);
+extern void drv_handle_rx(void);
 
 #endif
