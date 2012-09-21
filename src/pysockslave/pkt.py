@@ -82,30 +82,31 @@ class Pkt:
     def send(self, data, crc=False):
         start = time.time()
         """send a packet via vpar port"""
-        # set POUT, clr SEL & BUSY 
-        self.vpar.write_status(vpar.POUT_MASK)
+        # set HS_LINE (BUSY)
+        s = self.vpar.get_status() | vpar.BUSY_MASK
+        self.vpar.write_status(s)
         # set magic byte
         self.vpar.write_data(MAGIC)
         # pulse ACK -> trigger IRQ in server
-        self.vpar.write_status(vpar.POUT_MASK | vpar.ACK_MASK)
+        self.vpar.write_status(s | vpar.ACK_MASK)
         # wait for select
         ok = self.wait_select(True)
         if not ok:
             print "ERROR: Waiting for select"
             return False
         # set byte for CRC
-        ok = self.set_next_byte(False, 0x02)
+        ok = self.set_next_byte(True, 0x02)
         if not ok:
             print "ERROR: CRC flag"
             return False
         # send size
         size = len(data)
-        ok = self.set_next_word(True, size)
+        ok = self.set_next_word(False, size)
         if not ok:
             print "ERROR: size"
             return False    
         # send data
-        toggle = True
+        toggle = False
         pos = 0
         for a in data:
             ok = self.set_next_byte(toggle, ord(a))
@@ -118,5 +119,7 @@ class Pkt:
         ok = self.wait_line_toggle(toggle)
         if not ok:
             print "ERROR: final toggle"
-        
+        # clear HS_LINE (BUSY)
+        s = self.vpar.get_status() & ~vpar.BUSY_MASK
+        self.vpar.write_status(s)
         return ok

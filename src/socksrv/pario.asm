@@ -104,10 +104,9 @@ _interrupt:
     btst    #FLAGS_BIT_RX,s_Flags(a1)  
     bne.s   setack          
 
-    move.b  StatusReg,d0            ; PAR_STATUS==CIAF_PRTRPOUT ? 
-    andi.b  #7,d0
-    cmp.b   #2,d0   
-    bne.s   skipint
+    move.b  StatusReg,d0            ; make sure HS_LINE is set
+    btst    #HS_LINE,d0
+    beq.s   skipint
 
     bset    #FLAGS_BIT_RX,s_Flags(a1)
     move.l  s_IntSigMask(a1),d0
