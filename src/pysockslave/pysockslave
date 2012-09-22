@@ -3,15 +3,19 @@
 import vpar
 import pkt
 
-ctl_name = "/tmp/vctl"
 dat_name = "/tmp/vdat"
 
-vpar = vpar.VPar(ctl_name, dat_name)
+vpar = vpar.VPar(dat_name)
 pkt = pkt.Pkt(vpar)
 
 # send a packet
-ok = pkt.send("wow!");
-print "send",ok
+num = 0
+while True:
+    ok = pkt.send("wow!");
+    print "send",ok
+    num += 1
+    if not ok:
+        break
 
 vpar.close()
 

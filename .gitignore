@@ -1,4 +1,7 @@
 *.o
 *.library
+*.pyc
 test_sock
 shared
+socksrv
+install_dir
