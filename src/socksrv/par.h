@@ -8,6 +8,8 @@ struct state_s {
     ULONG     s_IntSigMask;
     struct Library * s_SysBase;
     struct Task    * s_ServerTask;
+    UWORD     s_MaxPacketSize;
+    UBYTE     s_UseCRC;
     UBYTE     s_TimeOut;
 };
 
@@ -23,7 +25,7 @@ struct packet_s {
     UWORD     p_CRC;
 };
 
-extern int par_init(void);
+extern int par_init(UWORD maxPacketSize, UBYTE useCRC);
 extern void par_shutdown(void);
 extern ULONG par_get_rx_sig_mask(void);
 extern int par_send(struct packet_s *pkt);

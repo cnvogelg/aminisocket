@@ -14,8 +14,7 @@ extern __asm int hwsend(register __a0 struct packet_s *packet, register __a1 str
 extern __asm int hwrecv(register __a0 struct packet_s *packet, register __a1 struct state_s *state);
 
 extern struct Library *SysBase;
-
-__far volatile struct CIA ciaa,ciab;
+extern __far volatile struct CIA ciaa,ciab;
 
 static ULONG intSig = 0;
 static int alloc_flags = 0;
@@ -49,7 +48,7 @@ extern ULONG par_get_rx_sig_mask(void)
     return state.s_IntSigMask;
 }
 
-int par_init(void)
+int par_init(UWORD maxPacketSize, UBYTE useCRC)
 {
     int err = -1;
     
@@ -65,6 +64,8 @@ int par_init(void)
     state.s_IntSigMask = 1UL << intSig;
     state.s_SysBase = SysBase;
     state.s_ServerTask = FindTask(NULL);
+    state.s_MaxPacketSize = maxPacketSize;
+    state.s_UseCRC = useCRC;
     
     /* register our time out flag */
     timer_timeout_set_flag_ptr(&state.s_TimeOut);

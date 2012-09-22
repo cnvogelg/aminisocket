@@ -27,6 +27,8 @@
     ULONG     s_IntSigMask
     APTR      s_SysBase
     APTR      s_ServerTask
+    UWORD     s_MaxPacketSize
+    UBYTE     s_UseCRC
     UBYTE     s_TimeOut
     LABEL     state_SIZE
     
@@ -35,7 +37,6 @@
     UWORD     p_Sync
     UWORD     p_Size
     UWORD     p_CRC
-    UWORD     p_Type
     LABEL     packet_SIZE
     
     IFND TRUE
@@ -146,7 +147,7 @@ _hwsend:
      ;
      ; CRC wanted ?
      ;
-     btst     #BIT_PTYPE_CRC,p_Type(a4)
+     tst.b    s_UseCRC(a2)
      beq.s    hww_NoCRC
      ; yes
 	 move.w   #SYNCWORD_CRC,p_Sync(a4)
@@ -164,14 +165,14 @@ hww_Start:
      moveq    #CIAICRF_FLG,d0
      JSRLIB   AbleICR                             ; DISABLEINT
 
-     lea      StatusReg,a5
      SETSELECT
      SETCIAOUTPUT
+
+     lea      StatusReg,a5
      move.b   (a5),d7                             ; SAMPLEINPUT, d7 = State
      move.l   a4,a3                               ; a4 = packet_s
      move.w   p_Size(a4),d6
-     addq.w   #packet_SIZE,d6
-     ;addq.w   #PKTFRAMESIZE_1-2,d6
+     addq.w   #packet_SIZE-2,d6
      move.b   (a3)+,OutReg                        ; WRITECIA *p++
 hww_LoopShake1:
      move.b   (a5),d0                             ; StatusReg
@@ -198,14 +199,18 @@ hww_LoopShake2:
 hww_cont2:
      eor.b    d0,d7
      dbra     d6,hww_MainLoop
+     
      moveq    #TRUE,d2                            ; rc = TRUE
 hww_TimedOut:
+    
      SETCIAINPUT
      bclr     d3,(a5)                             ; CLEARREQUEST StatusReg
+     
      moveq    #CIAICRF_FLG,d0
      JSRLIB   SetICR                              ; CLEARINT
      move.w   #CIAICRF_FLG|CIAICRF_SETCLR,d0
      JSRLIB   AbleICR                             ; ENABLEINT
+     
      CLRSELECT
 
      move.l   d2,d0                               ; return rc
@@ -298,17 +303,15 @@ hwr_cont3:
 
      move.w   -2(a3),d6                           ; = length
      
-     ; TODO - size check
-     ;subq.w   #PKTFRAMESIZE_2,d6
-     ;bcs.s    hwr_TimedOut
-     ;cmp.w    pb_MTU+2(a2),d6
-     ;bhi.s    hwr_TimedOut
-     ;addq.w   #PKTFRAMESIZE_2-1,d6
-     ;addq.w    #4,d6                              ; CRC + Type
-     subq.w    #1,d6
+     ; check incoming size
+     cmp.w     s_MaxPacketSize(a2),d6
+     bhi.s     hwr_TimedOut
+     
+     ; we need to read CRC WORD extra
+     ; (-1 byte due to dbra loop)
+     addq.w    #1,d6
 
      ; Read main packet body
-     ;
 hwr_MainLoop:
 hwr_LoopShake4:
      move.b   (a5),d0                             ; StatusReg
@@ -349,6 +352,9 @@ hwr_TimedOut:
      move.w   #CIAICRF_FLG|CIAICRF_SETCLR,d0
      JSRLIB   AbleICR                             ; ENABLEINT
      
+     ; make sure POUT is zero (in odd-sized transfers)
+     bclr     #CIAB_PRTRPOUT,StatusReg
+
      CLRSELECT
 
      move.l   d5,d0                               ; return value

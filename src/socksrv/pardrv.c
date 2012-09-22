@@ -5,7 +5,7 @@ static char pkt_data[256];
 
 int drv_init(void)
 {
-    return par_init();
+    return par_init(256 - sizeof(struct packet_s), 0);
 }
 
 void drv_shutdown(void)
@@ -22,5 +22,9 @@ void drv_handle_rx(void)
 {    
     struct packet_s *pkt = (struct packet_s *)pkt_data;
     int status = par_recv(pkt);
-    printf("recv: %d\n", status);
+    printf("rx: %d\n", status);
+    if(status == 1) {
+        int status = par_send(pkt);
+        printf("tx: %d\n", status);
+    }
 }

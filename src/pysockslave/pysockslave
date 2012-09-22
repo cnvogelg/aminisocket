@@ -2,20 +2,34 @@
 
 import vpar
 import pkt
+import time
 
 dat_name = "/tmp/vdat"
 
 vpar = vpar.VPar(dat_name)
 pkt = pkt.Pkt(vpar)
 
-# send a packet
-num = 0
-while True:
-    ok = pkt.send("wow!");
-    print "send",ok
-    num += 1
-    if not ok:
-        break
+msg = "w" * 15
+for i in xrange(64):
+    # send a packet
+    t = time.time()
+    ok = pkt.send(msg);
+    print "tx",msg,ok,time.time()-t
+
+    # try receive reply
+    if ok:
+        t = time.time()
+        ok = pkt.can_recv(timeout=1)
+        if ok:
+            data = pkt.recv()
+            if data != None:
+                print "rx",data,time.time()-t
+            else:
+                print "rx",False
+    else:
+        break;
+    
+    #msg += chr(64+i)
 
 vpar.close()
 

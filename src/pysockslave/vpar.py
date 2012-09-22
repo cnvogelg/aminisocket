@@ -9,8 +9,9 @@ SEL_MASK = 4
 ACK_MASK = 8
 
 class VPar:
-    def __init__(self, par_name=None):
+    def __init__(self, par_name=None, verbose=True):
         self.par_name = par_name
+        self.verbose = verbose
         self.par_file = open(self.par_name, "r+b", 0)
         self.ctl = 0
         self.dat = 0
@@ -23,11 +24,6 @@ class VPar:
         while self.has_data():
             self.par_file.read(1)
             
-    def write(self):
-        """write status and data"""
-        self.par_file.write(chr(self.ctl) + chr(self.dat))
-        print("tx: ctl=%02x dat=%02x" % (self.ctl, self.dat))
-
     def has_data(self, timeout=0):
         """poll if new data is available"""
         ready = select.select([self.par_file],[],[],timeout)[0]
@@ -40,19 +36,32 @@ class VPar:
             d = self.par_file.read(2)
             self.ctl = ord(d[0])
             self.dat = ord(d[1])
-            print("rx: ctl=%02x dat=%02x" % (self.ctl, self.dat))
+            if self.verbose:
+                print("rx: ctl=%02x dat=%02x" % (self.ctl, self.dat))
             
     def trigger_ack(self):
-        self.par_file.write(chr(self.ctl | ACK_MASK) + chr(self.dat))
-        print("tx: ctl=%02x dat=%02x" % (self.ctl, self.dat))        
+        cmd = ACK_MASK
+        self.par_file.write(chr(cmd) + chr(0))
+        if self.verbose:
+            print("tx: ack [%02x %02x]" % (cmd,3))        
 
-    def set_status(self, val):
-        self.ctl = val
-        self.write()
+    def set_status_mask(self, val):
+        cmd = 0x40 + val
+        self.par_file.write(chr(cmd)+chr(0))
+        if self.verbose:
+            print("tx: set=%02x [%02x %02x]" % (val,cmd,1))
+        
+    def clr_status_mask(self, val):
+        cmd = 0x80 + val
+        self.par_file.write(chr(cmd)+chr(0))
+        if self.verbose:
+            print("tx: clr=%02x [%02x %02x]" % (val,cmd,2))
         
     def set_data(self, val):
-        self.dat = val
-        self.write()
+        cmd = 0x10
+        self.par_file.write(chr(cmd)+chr(val))
+        if self.verbose:
+            print("tx: dat=%02x [%02x %02x]" % (val,cmd,val))
         
     def get_status(self, timeout=0):
         self.read(timeout)
@@ -62,12 +71,7 @@ class VPar:
         self.read(timeout)
         return self.dat
         
-    def set(self, ctl, dat):
-        self.ctl = ctl
-        self.dat = dat
-        self.write()
-        
-    def get(self, timeout=0):
+    def get_status_data(self, timeout=0):
         self.read(timeout)
         return (self.ctl, self.dat)
         
