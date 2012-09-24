@@ -140,12 +140,12 @@ class Pkt:
         ok = self.wait_line_toggle(toggle, timeout)
         if not ok:
             print "tx ERROR: final toggle"
-        # clear HS_LINE (BUSY)
-        self.vpar.clr_status_mask(vpar.BUSY_MASK)
         # wait for select end
         ok = self.wait_select(False, timeout)
         if not ok:
             print "tx ERROR: Waiting for unselect"
+        # clear HS_LINE (BUSY)
+        #self.vpar.clr_status_mask(vpar.BUSY_MASK)
         return ok
 
     def can_recv(self, timeout=0):
@@ -186,15 +186,16 @@ class Pkt:
             d = self.get_next_byte(toggle, timeout)
             if d == None:
                 print "rx ERROR: data",pos
+                return None
             data += chr(d)
             toggle = not toggle
             pos = pos+1
         # wait for select gone
         ok = self.wait_select(False, timeout)
-        # clear BUSY
-        self.vpar.clr_status_mask(vpar.BUSY_MASK)
         if not ok:
             print "rx ERROR: no unselect" 
             return None
+        # clear BUSY
+        #self.vpar.clr_status_mask(vpar.BUSY_MASK)
         return data
 

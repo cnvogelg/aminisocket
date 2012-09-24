@@ -173,7 +173,6 @@ int par_recv(struct packet_s *pkt)
     
     timer_timeout_start(rxTimeOut);
     err = hwrecv(pkt, &state);
-    printf("size: %d\n", pkt->p_Size);
     timer_timeout_clear();
     return err;
 }

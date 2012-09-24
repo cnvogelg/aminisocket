@@ -1,7 +1,13 @@
+#include <stdio.h>
+
 #include "par.h"
 #include "drv.h"
 
 static char pkt_data[256];
+static UWORD rx_err = 0;
+static ULONG rx_bytes = 0;
+static UWORD tx_err = 0;
+static ULONG tx_bytes = 0;
 
 int drv_init(void)
 {
@@ -22,9 +28,23 @@ void drv_handle_rx(void)
 {    
     struct packet_s *pkt = (struct packet_s *)pkt_data;
     int status = par_recv(pkt);
-    printf("rx: %d\n", status);
     if(status == 1) {
-        int status = par_send(pkt);
-        printf("tx: %d\n", status);
+        rx_bytes += pkt->p_Size;
+
+        status = par_send(pkt);
+        if(status == 1) {
+            tx_bytes += pkt->p_Size;
+        } else {
+            printf("TX error: %d\n", status);
+            tx_err ++;
+        }
+    } else {
+        printf("RX error: %d\n", status);
+        rx_err ++;
     }
+}
+
+void drv_handle_tick(void)
+{
+    printf("rx:%lu,%u tx:%lu,%u\n", rx_bytes, rx_err, tx_bytes, tx_err);
 }

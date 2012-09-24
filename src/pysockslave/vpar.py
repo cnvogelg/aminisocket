@@ -9,7 +9,7 @@ SEL_MASK = 4
 ACK_MASK = 8
 
 class VPar:
-    def __init__(self, par_name=None, verbose=True):
+    def __init__(self, par_name=None, verbose=False):
         self.par_name = par_name
         self.verbose = verbose
         self.par_file = open(self.par_name, "r+b", 0)
@@ -37,25 +37,25 @@ class VPar:
             self.ctl = ord(d[0])
             self.dat = ord(d[1])
             if self.verbose:
-                print("rx: ctl=%02x dat=%02x" % (self.ctl, self.dat))
+                print("rx: ctl=%02x dat=%02x [%02x %02x]" % (self.ctl, self.dat, self.ctl, self.dat))
             
     def trigger_ack(self):
         cmd = ACK_MASK
         self.par_file.write(chr(cmd) + chr(0))
         if self.verbose:
-            print("tx: ack [%02x %02x]" % (cmd,3))        
+            print("tx: ack [%02x %02x]" % (cmd,0))        
 
     def set_status_mask(self, val):
         cmd = 0x40 + val
         self.par_file.write(chr(cmd)+chr(0))
         if self.verbose:
-            print("tx: set=%02x [%02x %02x]" % (val,cmd,1))
+            print("tx: set=%02x [%02x %02x]" % (val,cmd,0))
         
     def clr_status_mask(self, val):
         cmd = 0x80 + val
         self.par_file.write(chr(cmd)+chr(0))
         if self.verbose:
-            print("tx: clr=%02x [%02x %02x]" % (val,cmd,2))
+            print("tx: clr=%02x [%02x %02x]" % (val,cmd,0))
         
     def set_data(self, val):
         cmd = 0x10

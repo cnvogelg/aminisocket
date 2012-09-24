@@ -36,13 +36,12 @@ static void main_loop(void)
         
         /* rx signal */
         if(sigGot & rxMask) {
-            puts("rx");
             drv_handle_rx();
         }
 
         /* tick timer */
         if(sigGot & tickMask) {
-            puts("tick");
+            drv_handle_tick();
             timer_tick_start(TICK_DELAY);
         }
         
