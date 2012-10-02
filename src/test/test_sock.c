@@ -15,11 +15,14 @@ int main()
         {   
             printf("Library Opened Sucessfully.\n");
             
+            puts("Set errno pointer");            
             SetErrnoPtr(&errno, sizeof errno);
 
+            puts("calling socket");
             sd = socket(AF_INET, SOCK_STREAM, 0);
             printf("sd=%d\n", sd);
 
+            puts("closing lib");
             CloseLibrary(SocketBase);
             printf("Library Closed.\n");
         }

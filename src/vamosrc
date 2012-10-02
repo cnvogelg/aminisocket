@@ -1,9 +1,10 @@
-# vamos config file for amininet build
+# vamos config file for aminisocket build
 
 [volumes]
 wb310=${WB_PATH}
 sc=${SC_PATH}
 net=${NETSDK_PATH}
+base=${BASE_DIR}
 
 [assigns]
 include=sc:include

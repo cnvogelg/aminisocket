@@ -3,8 +3,8 @@ BASE_DIR=..
 include $(BASE_DIR)/common.mk
 
 TARGET=bsdsocket.library
-SRCS=bsdsocket.c mininetdb.c
-HDRS=mininetdb.h
+SRCS=bsdsocket.c mininetdb.c msgio.c
+HDRS=mininetdb.h msgio.h
 
 all: $(TARGET)
     

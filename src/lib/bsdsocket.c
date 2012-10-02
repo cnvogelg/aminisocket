@@ -7,10 +7,33 @@
 #include <sys/time.h>
 #include "debug.h"
 #include "mininetdb.h"
+#include "msgio.h"
+
+static LONG local_errno = 0;
+static LONG *errno_ptr = &local_errno;
+
+/* errno values */
+#define EACCESS     2
+#define SET_ERRNO(x) *errno_ptr = -x
 
 __asm __saveds int lib_socket(register __d0 int domain, register __d1 int type, register __d2 int protocol )
 {
+    int err;
+    
     D(bug("socket(%ld,%ld,%ld)\n", domain, type, protocol));
+    
+
+    /* setup msgio */
+    err = msgio_init();
+    if(err != 0) {
+        D(bug("msgio_init(): failed with %d\n", err));
+        SET_ERRNO(EACCESS);
+        return -1;
+    }
+
+    /* prepare message */
+    msg->m_command = MSG_CMD_CREATE_SOCKET;
+    msgio_xfer_msg(msg);
     return 0;
 }
 
@@ -101,6 +124,7 @@ __asm __saveds int lib_IoctlSocket(register __d0 int sock, register __d1 unsigne
 __asm __saveds int lib_CloseSocket(register __d0 int sock )
 {
     D(bug("CloseSocket(%ld)\n", sock));
+    msgio_shutdown();
     return 0;
 }
 
@@ -141,13 +165,16 @@ __asm __saveds LONG lib_ReleaseCopyOfSocket(register __d0 LONG sock, register __
 
 __asm __saveds long lib_Errno( void  )
 {
-    D(bug("Errno()\n"));
-    return 0;
+    D(bug("Errno(): %d\n", *errno_ptr));
+    return *errno_ptr;
 }
 
-__asm __saveds void lib_SetErrnoPtr(register __a0 void * errno_ptr, register __d0 int size )
+__asm __saveds void lib_SetErrnoPtr(register __a0 void * new_errno_ptr, register __d0 int size )
 {
     D(bug("SetErrnoPtr(%lx,%ld)\n", errno_ptr, size));
+    if(size == sizeof(LONG)) {
+        errno_ptr = new_errno_ptr;
+    }
 }
 
 __asm __saveds char * lib_Inet_NtoA(register __d0 long ip )

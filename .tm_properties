@@ -5,7 +5,7 @@ exclude = "*.{o,pyc}"
 tabSize = 4
 softTabs = true
 
-[ makefile,smakefile ]
+[ "makefile,smakefile" ]
 tabSize = 4
 softTabs = false
 

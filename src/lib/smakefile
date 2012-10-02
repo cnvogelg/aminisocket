@@ -2,10 +2,11 @@
 
 all: bsdsocket.library test_sock
 
-CFLAGS=nostackcheck libcode debug line INCLUDEDIR netinclude:
-OBJS=bsdsocket.o mininetdb.o
+CFLAGS=nostackcheck libcode debug line INCLUDEDIR netinclude: INCLUDEDIR base:common
+OBJS=bsdsocket.o mininetdb.o msgio.o
+HDRS=mininetdb.h msgio.h
 
-bsdsocket.library: ${OBJS}
+bsdsocket.library: ${OBJS} ${HDRS}
 	slink with <<
 LIBFD bsdsocket.fd 
 LIBPREFIX _lib_

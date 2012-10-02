@@ -17,3 +17,4 @@ clean:
 	
 install: all
 	cp $(TARGET) $(INSTALL_DIR)/
+	cp run_test $(INSTALL_DIR)/

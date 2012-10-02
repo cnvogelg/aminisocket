@@ -6,14 +6,14 @@
 # SC_PATH - base directory of SAS C compilter 6.58 installation
 # NETSDK_PATH - AmiTCP SDK path
 AMI_BASE?=$(HOME)/Projects/amitools_data
-WB_PATH=$(BASE)/wb310
-SC_PATH=$(BASE)/sc
-NETSDK_PATH=$(BASE)/netsdk
+WB_PATH=$(AMI_BASE)/wb310
+SC_PATH=$(AMI_BASE)/sc
+NETSDK_PATH=$(AMI_BASE)/netsdk
 
 # path of vamos
 VAMOS?=vamos
 
 # how to run vamos
-VAMOS_RUN=$(VAMOS) -c $(BASE_DIR)/vamosrc
+VAMOS_RUN=BASE_DIR=$(BASE_DIR) $(VAMOS) -c $(BASE_DIR)/vamosrc
 
 INSTALL_DIR=$(BASE_DIR)/install_dir

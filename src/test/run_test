@@ -1,0 +1,4 @@
+; run aminisocket test suite
+copy bsdsocket.library libs:
+execute run_socksrv
+test_sock

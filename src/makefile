@@ -1,6 +1,6 @@
 # makefile - master make file for aminisocket project
 
-SUBDIRS=socklib socktest
+SUBDIRS=lib srv test
 
 all:
 	@for subdir in $(SUBDIRS) ; do \

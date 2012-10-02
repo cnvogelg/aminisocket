@@ -2,9 +2,9 @@
 
 all: bsdsocket.library test_sock
 
-CFLAGS=nostackcheck debug line INCLUDEDIR netinclude:
-OBJS=socksrv.o pardrv.o par.o pario.o crc16.o timer.o
-HDRS=timer.h drv.h par.h
+CFLAGS=nostackcheck debug line INCLUDEDIR netinclude: INCLUDEDIR base:common
+OBJS=socksrv.o pardrv.o par.o pario.o crc16.o timer.o msgio.o
+HDRS=timer.h drv.h par.h msgio.h
 TARGET=socksrv
 
 ${TARGET}: ${OBJS} ${HDRS}

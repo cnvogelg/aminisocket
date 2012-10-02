@@ -1,0 +1,4 @@
+; run_socksrv
+echo >t:run_socksrv socksrv
+echo >>t:run_socksrv endcli
+newshell con:0/10/640/100/socksrv from t:run_socksrv
