@@ -4,9 +4,9 @@ import vpar
 import pkt
 import time
 
-dat_name = "/tmp/hpar"
+par_name = "/tmp/hpar"
 
-vpar = vpar.VPar(dat_name)
+vpar = vpar.VPar(par_name)
 pkt = pkt.Pkt(vpar)
 
 msg = "ww" * 64
