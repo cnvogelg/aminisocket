@@ -1,0 +1,22 @@
+# smakefile for parblk.device on SAS C 6.58
+
+RM = C:Delete >NIL:
+
+all: test_device
+
+CFLAGS=nostackcheck debug line INCLUDEDIR base:parblk/amiga/include
+OBJS=test_device.o
+HDRS=
+TARGET=test_device
+
+${TARGET}: ${OBJS} ${HDRS}
+	slink with <<
+FROM LIB:c.o ${OBJS}
+TO ${TARGET}
+LIB LIB:sc.lib LIB:amiga.lib
+ADDSYM	
+<
+
+clean:
+    -@${RM} ${OBJS}
+    -@${RM} ${TARGET}
