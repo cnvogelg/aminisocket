@@ -2,21 +2,27 @@
 
 RM = C:Delete >NIL:
 
-all: test_device
+all: test_device test_parblk
 
-CFLAGS=nostackcheck debug line INCLUDEDIR base:parblk/amiga/include
-OBJS=test_device.o
-HDRS=
-TARGET=test_device
+INCDIRS=INCLUDEDIR base:parblk/amiga/include INCLUDEDIR base:parblk/amiga/lib
+CFLAGS=nostackcheck debug line $(INCDIRS)
 
-${TARGET}: ${OBJS} ${HDRS}
+test_device: test_device.o
 	slink with <<
-FROM LIB:c.o ${OBJS}
-TO ${TARGET}
+FROM LIB:c.o test_device.o
+TO test_device
 LIB LIB:sc.lib LIB:amiga.lib
 ADDSYM	
 <
 
+test_parblk: test_parblk.o
+	slink with <<
+FROM LIB:c.o test_parblk.o
+TO test_parblk
+LIB base:parblk/amiga/lib/parblk.lib LIB:sc.lib LIB:amiga.lib
+ADDSYM	
+<
+
 clean:
-    -@${RM} ${OBJS}
-    -@${RM} ${TARGET}
+    -@${RM} test_device.o test_parblk.o
+    -@${RM} test_device   test_parblk

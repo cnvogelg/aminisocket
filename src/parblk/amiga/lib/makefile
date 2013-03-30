@@ -2,8 +2,9 @@
 BASE_DIR=../../..
 include $(BASE_DIR)/common.mk
 
-TARGET=test_device test_parblk
-SRCS=test_device.c test_parblk.c
+TARGET=parblk.lib
+SRCS=crc16.asm par.c parblk.c pario.asm timer.c pkt.c
+HDRS=par.h parblk.h timer.h pkt.h
     
 all: $(TARGET)
 
@@ -15,4 +16,3 @@ clean:
 	rm -f *.o
 	
 install: all
-	cp $(TARGET) $(INSTALL_DIR)/

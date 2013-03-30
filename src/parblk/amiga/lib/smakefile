@@ -1,0 +1,17 @@
+# smakefile for parblk.lib on SAS C 6.58
+
+RM = C:Delete >NIL:
+
+CFLAGS=nostackcheck debug line
+OBJS=crc16.o par.o pkt.o parblk.o pario.o timer.o 
+HDRS=par.h parblk.h timer.h pkt.h
+TARGET=parblk.lib
+
+all: ${TARGET}
+
+${TARGET}: ${OBJS} ${HDRS}
+    oml ${TARGET} r ${OBJS}
+
+clean:
+    -@${RM} ${OBJS}
+    -@${RM} ${TARGET}

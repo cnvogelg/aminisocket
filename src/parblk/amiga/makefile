@@ -1,6 +1,6 @@
 # makefile - master make file for aminisocket project
 
-SUBDIRS=device test
+SUBDIRS=device lib test
 
 all:
 	@for subdir in $(SUBDIRS) ; do \
