@@ -162,10 +162,18 @@ int par_send(struct par_packet_s *pkt)
     }
     
     if(have_line) {
-        if(!(state.s_Flags & FLAGS_MASK_RX)) {       
+        if(!(state.s_Flags & FLAGS_MASK_RX)) {  
+            int rc;
+        
             timer_timeout_start(txTimeOut);
-            err = hwsend(pkt, &state);
+            rc = hwsend(pkt, &state);
             timer_timeout_clear();
+            
+            if(rc == 0) {
+                err = PAR_ERR_TIMEOUT;
+            } else {
+                err = PAR_OK;
+            } 
         } else {
             err = PAR_ERR_COLLISION;
         }
@@ -179,10 +187,21 @@ int par_send(struct par_packet_s *pkt)
 int par_recv(struct par_packet_s *pkt)
 {
     int err = 0;
+    int rc;
+    int i;
     
     timer_timeout_start(rxTimeOut);
-    err = hwrecv(pkt, &state);
+    rc = hwrecv(pkt, &state);
     timer_timeout_clear();
+
+    if(rc == 0) {
+        err = PAR_ERR_TIMEOUT;
+    } else if(rc == 2) {
+        err = PAR_ERR_CRC;
+    } else {
+        err = PAR_OK;
+    }
+
     pkt->p_Result = err;
     return err;
 }

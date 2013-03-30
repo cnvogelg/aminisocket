@@ -1,0 +1,29 @@
+#!/usr/bin/env python2.7
+
+import vpar
+import parblk
+import time
+
+par_name = "/tmp/hpar"
+
+vpar = vpar.VPar(par_name,verbose=True)
+parblk = parblk.ParBlk(vpar)
+
+try:
+  while True:
+    ok = parblk.can_recv(timeout=1)
+    print "can_recv: ",ok
+    if ok:
+      data = parblk.recv()
+      if data != None:
+        print "rx",len(data),data
+        # send back
+        ok = parblk.send("abcd")
+        print "tx",ok
+      else:
+        print "rx: ERR"
+except KeyboardInterrupt:
+  pass
+
+vpar.close()
+

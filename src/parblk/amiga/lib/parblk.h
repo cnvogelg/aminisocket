@@ -16,6 +16,6 @@ extern ULONG parblk_get_sig_mask(void);
 extern BOOL parblk_handle_sig(ULONG sigmask);
 
 extern packet_t *parblk_read(APTR buffer, UWORD size, pkt_done_func_t func);
-extern packet_t *parblk_write(APTR buffer, UWORD size, UWORD flags, pkt_done_func_t func);
+extern packet_t *parblk_write(APTR buffer, UWORD size, pkt_done_func_t func);
 
 #endif

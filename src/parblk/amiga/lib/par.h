@@ -23,9 +23,8 @@ struct par_packet_s {
     UWORD     p_Sync;
     UWORD     p_Size;
     UWORD     p_CRC;
-    UWORD     p_Flags;
     
-    APTR      p_Buffer;     /* data buffer to be transferred */
+    UBYTE *   p_Buffer;     /* data buffer to be transferred */
     int       p_Result;     /* transfer result */
 };
 
@@ -37,6 +36,7 @@ typedef struct par_packet_s par_packet_t;
 #define PAR_ERR_COLLISION               -2
 #define PAR_ERR_NO_LINE                 -3
 #define PAR_ERR_BUFFER_TOO_SMALL        -4
+#define PAR_ERR_CRC                     -5
 
 /* init result */
 #define PAR_INIT_OK             0

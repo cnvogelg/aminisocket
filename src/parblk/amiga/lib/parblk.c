@@ -32,16 +32,16 @@ int parblk_init(void)
     BOOL ok;
     int result;
     
-    /* setup parallel port */
-    result = par_init(max_pkt_size, 0);
-    if(result != PAR_INIT_OK) {
-        return result;
-    }
-    
     /* setup timer */
     ok = timer_init();
     if(!ok) {
         return PARBLK_INIT_NO_TIMER;
+    }
+    
+    /* setup parallel port */
+    result = par_init(max_pkt_size, 0);
+    if(result != PAR_INIT_OK) {
+        return result;
     }
     
     /* setup mem */
@@ -70,14 +70,14 @@ void parblk_shutdown(void)
 {
     timer_tick_clear();
     
+    /* free mem */
+    pkt_free();
+
     /* shutdown parallel port */
     par_shutdown();
     
     /* shutdown timer */
     timer_shutdown();
-    
-    /* free mem */
-    pkt_free();
 }
 
 static void done_tx_packet(packet_t *p)
@@ -87,10 +87,19 @@ static void done_tx_packet(packet_t *p)
     if(f != NULL) {
         f(p);
     }
-    /* otherwise release packet ourselves */
-    else {
-        pkt_tx_release(p);
+    /* now release packet */
+    pkt_tx_release(p);
+}
+
+static void done_rx_packet(packet_t *p)
+{
+    /* call done func: must release packet! */
+    pkt_done_func_t f = p->p_DoneFunc;
+    if(f != NULL) {
+        f(p);
     }
+    /* now release packet */
+    pkt_rx_release(p);    
 }
 
 static BOOL handle_tx_queue(void)
@@ -142,40 +151,33 @@ ULONG parblk_get_sig_mask(void)
     return rx_sigmask | timer_sigmask;
 }
 
-static packet_t *get_next_empty_rx_pkt(void)
-{
-    packet_t *p = NULL;
-    
-    /* check if rx_empty_list has a packet prepared for us */
-    ObtainSemaphore(&rx_empty_sem);
-    if(!IsListEmpty(&rx_empty_list)) {
-        p = (packet_t *)RemHead(&rx_empty_list);
-    }
-    ReleaseSemaphore(&rx_empty_sem);
-    
-    /* if no packet is ready to be filled then use a new one */
-    if(p == NULL) {
-        p = pkt_rx_alloc();
-    }
-    
-    return p;
-}
-
 BOOL parblk_handle_sig(ULONG sigmask)
 {   
     /* an incoming packet is signalled */
     if(sigmask & rx_sigmask) {
         packet_t *p;
         int error;
+        BOOL from_empty = FALSE;
         
-        /* get next packet for incoming data */
-        p = get_next_empty_rx_pkt();
-        
-        /* fatal: no packet to fill */
-        if(p == NULL) {
-            return FALSE;
+        /* check if rx_empty_list has a packet prepared for us.
+           this happens if a read was called but no packet has arrived yet 
+        */
+        ObtainSemaphore(&rx_empty_sem);
+        if(!IsListEmpty(&rx_empty_list)) {
+            p = (packet_t *)RemHead(&rx_empty_list);
+            from_empty = TRUE;
         }
-        
+        ReleaseSemaphore(&rx_empty_sem);
+    
+        /* if no packet is ready to be filled then use a new one */
+        if(p == NULL) {
+            p = pkt_rx_alloc();
+            /* fatal: no packet to fill */
+            if(p == NULL) {
+                return FALSE;
+            }
+        }
+                
         /* make sure buffer is valid 
            use pre-allocated buffer if none is set
         */
@@ -186,10 +188,14 @@ BOOL parblk_handle_sig(ULONG sigmask)
         /* try to recevie from parallel */
         error = par_recv(&p->p_ParPacket);
         
-        /* add to rx_filled_list */
-        ObtainSemaphore(&rx_filled_sem);
-        AddTail(&rx_filled_list, &p->p_Node);
-        ReleaseSemaphore(&rx_filled_sem);
+        if(from_empty) {
+            done_rx_packet(p);
+        } else {
+            /* add to rx_filled_list */
+            ObtainSemaphore(&rx_filled_sem);
+            AddTail(&rx_filled_list, &p->p_Node);
+            ReleaseSemaphore(&rx_filled_sem);
+        }
     }
     
     /* an incoming timer tick */
@@ -204,7 +210,7 @@ BOOL parblk_handle_sig(ULONG sigmask)
     return TRUE;
 }
 
-packet_t *parblk_write(APTR buffer, UWORD size, UWORD flags, pkt_done_func_t func)
+packet_t *parblk_write(APTR buffer, UWORD size, pkt_done_func_t func)
 {
     packet_t *p;
     BOOL ok;
@@ -218,7 +224,6 @@ packet_t *parblk_write(APTR buffer, UWORD size, UWORD flags, pkt_done_func_t fun
     
     /* prepare packet */
     p->p_ParPacket.p_Size = size;
-    p->p_ParPacket.p_Flags = flags;
     p->p_ParPacket.p_Buffer = buffer;
     p->p_DoneFunc = func;
     
@@ -232,7 +237,7 @@ packet_t *parblk_write(APTR buffer, UWORD size, UWORD flags, pkt_done_func_t fun
         int error = par_send(&p->p_ParPacket);
         if(error == PAR_OK) {
             /* directly call done func */
-            func(p);
+            done_tx_packet(p);
         }
         /* push on list for later */
         else {
@@ -282,7 +287,7 @@ packet_t *parblk_read(APTR buffer, UWORD size, pkt_done_func_t func)
             memcpy(buffer, p->p_ParPacket.p_Buffer, pkt_size);
         }
         /* directly reply with done call */
-        func(p);
+        done_rx_packet(p);
     }
     /* need to queue a receive */
     else {

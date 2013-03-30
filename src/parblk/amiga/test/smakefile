@@ -15,7 +15,7 @@ LIB LIB:sc.lib LIB:amiga.lib
 ADDSYM	
 <
 
-test_parblk: test_parblk.o
+test_parblk: test_parblk.o base:parblk/amiga/lib/parblk.lib
 	slink with <<
 FROM LIB:c.o test_parblk.o
 TO test_parblk

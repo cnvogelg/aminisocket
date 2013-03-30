@@ -37,7 +37,6 @@
     UWORD     p_Sync
     UWORD     p_Size
     UWORD     p_CRC
-    UWORD     p_Flags
     LABEL     packet_SIZE
     
     IFND TRUE
@@ -152,7 +151,7 @@ _hwsend:
      beq.s    hww_NoCRC
      ; yes
 	 move.w   #SYNCWORD_CRC,p_Sync(a4)
-     lea      packet_SIZE(a4),a0
+     move.l   packet_SIZE(a4),a0
      move.w   p_Size(a4),d0
      jsr      _CRC16(pc)
      move.w   d0,p_CRC(a4)
@@ -172,8 +171,7 @@ hww_Start:
      lea      StatusReg,a5
      move.b   (a5),d7                             ; SAMPLEINPUT, d7 = State
      move.l   a4,a3                               ; a4 = packet_s
-     move.w   p_Size(a4),d6
-     addq.w   #packet_SIZE-2,d6
+     moveq    #packet_SIZE-2,d6                   ; first packet header
      move.b   (a3)+,OutReg                        ; WRITECIA *p++
 hww_LoopShake1:
      move.b   (a5),d0                             ; StatusReg
@@ -185,10 +183,7 @@ hww_LoopShake1:
      bra.s    hww_TimedOut
 hww_cont1:
      eor.b    d0,d7
-
-     move.l   (a3),a3                             ; fetch buffer pointer
-
-hww_MainLoop:
+hww_HdrLoop:
      move.b   (a3)+,OutReg                        ; WRITECIA *p++
      bchg     d3,(a5)                             ; OUTPUTTOGGLE
 hww_LoopShake2:
@@ -200,6 +195,26 @@ hww_LoopShake2:
      beq.s    hww_LoopShake2
      bra.s    hww_TimedOut
 hww_cont2:
+     eor.b    d0,d7
+     dbra     d6,hww_HdrLoop
+
+     ; now send data buffer
+     move.w   p_Size(a4),d6
+     subq     #1,d6
+     move.l   (a3),a3                             ; fetch buffer pointer
+
+hww_MainLoop:
+     move.b   (a3)+,OutReg                        ; WRITECIA *p++
+     bchg     d3,(a5)                             ; OUTPUTTOGGLE
+hww_LoopShake3:
+     move.b   (a5),d0                             ; StatusReg
+     eor.b    d7,d0
+     btst     d4,d0                               ; WAITINPUTTOGGLE
+     bne.s    hww_cont3
+     tst.b    s_TimeOut(a2)                       ; check time out
+     beq.s    hww_LoopShake3
+     bra.s    hww_TimedOut
+hww_cont3:
      eor.b    d0,d7
      dbra     d6,hww_MainLoop
      
@@ -272,10 +287,11 @@ hwr_cont1:
      subq.b   #SYNCBYTE_NOCRC,d0
      bcc.s    hwr_TimedOut
      
+     ; read header
      lea      p_Size(a4),a3
+     moveq    #packet_SIZE-3,d6                   ; skip MAGIC 
 
-     ; Read 1st length byte
-     ;
+hwr_HeaderLoop:
 hwr_LoopShake2:
      move.b   (a5),d0                             ; StatusReg
      eor.b    d7,d0
@@ -289,47 +305,31 @@ hwr_cont2:
      move.b   OutReg,(a3)+                        ; READCIABYTE
      bchg     d3,(a5)                             ; OUTPUTTOGGLE
 
-     ; Read 2nd length byte
-     ;
+     dbra     d6,hwr_HeaderLoop
+
+     ; check incoming size
+     move.w   p_Size(a4),d6
+     cmp.w    s_MaxPacketSize(a2),d6
+     bhi.s    hwr_TimedOut
+     
+     ; Read main packet body
+     move.l   (a3),a3                             ; fetch buffer pointer
+     subq     #1,d6
+
+hwr_MainLoop:
 hwr_LoopShake3:
      move.b   (a5),d0                             ; StatusReg
      eor.b    d7,d0
-     btst     d2,d0                               ; WAITINPUTTOGGLE
+     btst     d2,d0
      bne.s    hwr_cont3
-     tst.b    s_TimeOut(a2)                       ; check time out
+     tst.b    s_TimeOut(a2)                       ; a2 = *timeOut
      beq.s    hwr_LoopShake3
      bra.s    hwr_TimedOut
 hwr_cont3:
      eor.b    d0,d7
      move.b   OutReg,(a3)+                        ; READCIABYTE
      bchg     d3,(a5)                             ; OUTPUTTOGGLE StatusReg
-
-     move.w   -2(a3),d6                           ; = length
      
-     move.l   (a3),a3                             ; fetch buffer pointer
-
-     ; check incoming size
-     cmp.w     s_MaxPacketSize(a2),d6
-     bhi.s     hwr_TimedOut
-     
-     ; we need to read CRC WORD extra
-     ; (-1 byte due to dbra loop)
-     addq.w    #1,d6
-
-     ; Read main packet body
-hwr_MainLoop:
-hwr_LoopShake4:
-     move.b   (a5),d0                             ; StatusReg
-     eor.b    d7,d0
-     btst     d2,d0
-     bne.s    hwr_cont4
-     tst.b    s_TimeOut(a2)                       ; a2 = *timeOut
-     beq.s    hwr_LoopShake4
-     bra.s    hwr_TimedOut
-hwr_cont4:
-     eor.b    d0,d7
-     move.b   OutReg,(a3)+                        ; READCIABYTE
-     bchg     d3,(a5)                             ; OUTPUTTOGGLE StatusReg
      dbra     d6,hwr_MainLoop
 
 hwr_DoneRead:
@@ -337,13 +337,13 @@ hwr_DoneRead:
      bne.s    hwr_ReadOkay
 
      ; do CRC check
-     lea      packet_SIZE(a4),a0
+     move.l   packet_SIZE(a4),a0
      move.w   p_Size(a4),d0
-     ;subq.w   #PKTFRAMESIZE_2,d0
      jsr      _CRC16(pc)
      cmp.w    p_CRC(a4),d0
-     bne.s    hwr_TimedOut
-
+     beq.s    hwr_ReadOkay
+     moveq    #2,d5
+     bra.s    hwr_TimedOut
 hwr_ReadOkay:
      moveq    #TRUE,d5
 hwr_TimedOut:

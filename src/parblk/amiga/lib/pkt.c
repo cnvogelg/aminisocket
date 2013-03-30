@@ -93,16 +93,17 @@ void reset_pkt(packet_t *p)
 
 packet_t *pkt_tx_alloc(void)
 {
-    packet_t *p;
+    packet_t *p = NULL;
     
     ObtainSemaphore(&tx_sem);
-    if(IsListEmpty(&tx_free)) {
-        ReleaseSemaphore(&tx_sem);
-        return NULL;
+    if(!IsListEmpty(&tx_free)) {
+        p = (packet_t *)RemHead(&tx_free);
     }
-    p = (packet_t *)RemHead(&tx_free);
     ReleaseSemaphore(&tx_sem);
-    reset_pkt(p);
+
+    if(p!=NULL) {
+        reset_pkt(p);
+    }
     return p;
 }
 
@@ -115,23 +116,23 @@ void pkt_tx_release(packet_t *np)
 
 packet_t *pkt_rx_alloc(void)
 {
-    packet_t *p;
+    packet_t *p = NULL;
     
     ObtainSemaphore(&rx_sem);
-    if(IsListEmpty(&rx_free)) {
-        ReleaseSemaphore(&rx_sem);
-        return NULL;
+    if(!IsListEmpty(&rx_free)) {
+        p = (packet_t *)RemHead(&rx_free);
     }
-    p = (packet_t *)RemHead(&rx_free);
     ReleaseSemaphore(&rx_sem);
-    reset_pkt(p);
+
+    if(p!=NULL) {
+        reset_pkt(p);
+    }
     return p;    
 }
 
 void pkt_rx_release(packet_t *np)
 {
-    ObtainSemaphore(&tx_sem);
-    AddTail(&tx_free, &np->p_Node);
-    ReleaseSemaphore(&tx_sem);
+    ObtainSemaphore(&rx_sem);
+    AddTail(&rx_free, &np->p_Node);
+    ReleaseSemaphore(&rx_sem);
 }
-
