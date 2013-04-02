@@ -1,29 +1,84 @@
 #!/usr/bin/env python2.7
 
+import sys
 import vpar
 import parblk
 import time
+import argparse
 
 par_name = "/tmp/hpar"
+size = 1024
+loops = 10
 
-vpar = vpar.VPar(par_name,verbose=True)
+# parse args
+parser = argparse.ArgumentParser()
+parser.add_argument('-t', '--tx', action='store_true', default=False, help="start sending a packet")
+parser.add_argument('-v', '--verbose', action='store_true', default=False, help="be verbose")
+parser.add_argument('-d', '--debug', action='store_true', default=False, help="debug code")
+parser.add_argument('-b', '--bytes', type=int, default=1024, help="buffer size in bytes")
+parser.add_argument('-l', '--loops', type=int, default=10, help="number of test loops")
+args = parser.parse_args()
+size = args.bytes
+loops = args.loops
+
+# direction
+if args.tx:
+  do_rx = False
+  do_tx = True
+else:
+  do_rx = True
+  do_tx = False
+
+def log(*v):
+  global args
+  if args.verbose:
+    print(v)
+
+vpar = vpar.VPar(par_name,verbose=args.debug)
 parblk = parblk.ParBlk(vpar)
 
+print "test_parblk: size=",size," loops=",loops
+num = 0
+rx_sum = 0
+tx_sum = 0
+data = "*" * size
 try:
-  while True:
-    ok = parblk.can_recv(timeout=1)
-    print "can_recv: ",ok
-    if ok:
-      data = parblk.recv()
-      if data != None:
-        print "rx",len(data),data
-        # send back
-        ok = parblk.send("abcd")
-        print "tx",ok
-      else:
-        print "rx: ERR"
+  while num < loops:
+    if do_rx:
+      # check for rx
+      has_data = parblk.can_recv(timeout=1)
+      log("can_recv: ",has_data)
+      if has_data:
+        # rx: get block
+        s = time.time()
+        data = parblk.recv()
+        e = time.time()
+        rx_sum += e - s
+        if data == None:
+          break
+        log("rx",len(data))
+        do_rx = False
+        do_tx = True
+    if do_tx:
+      # tx: send back
+      s = time.time()
+      ok = parblk.send(data)
+      e = time.time()
+      tx_sum += e - s
+      log("tx",ok)
+      if not ok:
+        break
+      do_rx = True
+      do_tx = False
+      num += 1
 except KeyboardInterrupt:
   pass
+
+print "time tx:",tx_sum," rx:",rx_sum
+if tx_sum > 0 and rx_sum > 0:
+  tx_rate = loops * size / tx_sum
+  rx_rate = loops * size / rx_sum
+  print "rate tx:",tx_rate," rx:",rx_rate
 
 vpar.close()
 

@@ -37,7 +37,7 @@ class VPar:
             self.ctl = ord(d[0])
             self.dat = ord(d[1])
             if self.verbose:
-                print("rx: ctl=%02x dat=%02x [%02x %02x]" % (self.ctl, self.dat, self.ctl, self.dat))
+                print("RX: ctl=%02x dat=%02x [%02x %02x]" % (self.ctl, self.dat, self.ctl, self.dat))
     
     def write(self, data):
         self.par_file.write(data)

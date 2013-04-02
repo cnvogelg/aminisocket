@@ -259,6 +259,10 @@ _hwrecv:
      moveq    #HS_LINE,d2                         ; d2 = HS_LINE
      lea      StatusReg,a5                        ; a5 = StatusReg
 
+     ; copy current size to state
+     move.w   p_Size(a4),d6
+     move.w   d6,s_MaxPacketSize(a2)
+
      moveq    #CIAICRF_FLG,d0
      JSRLIB   AbleICR                             ; DISABLEINT
      

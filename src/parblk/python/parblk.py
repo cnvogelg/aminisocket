@@ -54,9 +54,8 @@ class ParBlk:
             t = time.time()
         return False
     
-    def toggle_busy(self):
-        s = self.vpar.get_status()
-        if s & vpar.BUSY_MASK:
+    def toggle_busy(self, value):
+        if value:
             self.vpar.clr_status_mask(vpar.BUSY_MASK)
         else:
             self.vpar.set_status_mask(vpar.BUSY_MASK)
@@ -67,7 +66,7 @@ class ParBlk:
             print "FAILED: wait for",toggle_expect
             return False
         self.vpar.set_data(value)
-        self.toggle_busy()
+        self.toggle_busy(toggle_expect)
         return True
 
     def set_next_word(self, toggle_expect, value, timeout=1):
@@ -85,7 +84,7 @@ class ParBlk:
             print "FAILED: wait for",toggle_expect
             return None
         data = self.vpar.get_data()
-        self.toggle_busy()
+        self.toggle_busy(not toggle_expect)
         return data
     
     def get_next_word(self, toggle_expect, timeout=1):
@@ -148,7 +147,7 @@ class ParBlk:
         if not ok:
             print "tx ERROR: Waiting for unselect"
         # clear HS_LINE (BUSY)
-        #self.vpar.clr_status_mask(vpar.BUSY_MASK)
+        self.vpar.clr_status_mask(vpar.BUSY_MASK)
         return ok
 
     def can_recv(self, timeout=0):
@@ -199,6 +198,6 @@ class ParBlk:
             print "rx ERROR: no unselect" 
             return None
         # clear BUSY
-        #self.vpar.clr_status_mask(vpar.BUSY_MASK)
+        self.vpar.clr_status_mask(vpar.BUSY_MASK)
         return data
 
