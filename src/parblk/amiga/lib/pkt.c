@@ -67,6 +67,7 @@ BOOL pkt_init(void)
     for(i=0;i<rx_pkt_size;i++) {
         AddHead(&rx_free, &p->p_Node);
         p->p_OwnBuffer = pkt_data;
+        p->p_OwnBufferSize = max_pkt_size;
         pkt_data += max_pkt_size;
         p++;
     }

@@ -39,7 +39,7 @@ int parblk_init(void)
     }
     
     /* setup parallel port */
-    result = par_init(max_pkt_size, 0);
+    result = par_init(0);
     if(result != PAR_INIT_OK) {
         return result;
     }
@@ -183,6 +183,7 @@ BOOL parblk_handle_sig(ULONG sigmask)
         */
         if(p->p_ParPacket.p_Buffer == NULL) {
             p->p_ParPacket.p_Buffer = p->p_OwnBuffer;
+            p->p_ParPacket.p_BufferSize = p->p_OwnBufferSize;
         }
         
         /* try to recevie from parallel */
@@ -299,7 +300,7 @@ packet_t *parblk_read(APTR buffer, UWORD size, pkt_done_func_t func)
         }
     
         /* prepare packet */
-        p->p_ParPacket.p_Size = size;
+        p->p_ParPacket.p_BufferSize = size;
         p->p_ParPacket.p_Buffer = buffer;
         p->p_DoneFunc = func;
         

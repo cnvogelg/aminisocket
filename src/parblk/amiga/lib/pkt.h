@@ -16,6 +16,7 @@ struct packet_s {
   APTR p_UserData;
   pkt_done_func_t p_DoneFunc;
   UWORD p_Retries;
+  UWORD p_OwnBufferSize;
 };
 typedef struct packet_s packet_t;
 

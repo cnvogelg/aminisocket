@@ -48,7 +48,7 @@ extern ULONG par_get_rx_sig_mask(void)
     return state.s_IntSigMask;
 }
 
-int par_init(UWORD maxPacketSize, UBYTE useCRC)
+int par_init(UBYTE useCRC)
 {
     int result = PAR_INIT_OK;
     
@@ -64,7 +64,6 @@ int par_init(UWORD maxPacketSize, UBYTE useCRC)
     state.s_IntSigMask = 1UL << intSig;
     state.s_SysBase = SysBase;
     state.s_ServerTask = FindTask(NULL);
-    state.s_MaxPacketSize = maxPacketSize;
     state.s_UseCRC = useCRC;
     
     /* register our time out flag */

@@ -27,7 +27,6 @@
     ULONG     s_IntSigMask
     APTR      s_SysBase
     APTR      s_ServerTask
-    UWORD     s_MaxPacketSize
     UBYTE     s_UseCRC
     UBYTE     s_TimeOut
     LABEL     state_SIZE
@@ -38,6 +37,8 @@
     UWORD     p_Size
     UWORD     p_CRC
     LABEL     packet_SIZE
+    UWORD     p_BufferSize
+    APTR      p_Buffer
     
     IFND TRUE
 TRUE  equ 1
@@ -151,7 +152,7 @@ _hwsend:
      beq.s    hww_NoCRC
      ; yes
 	 move.w   #SYNCWORD_CRC,p_Sync(a4)
-     move.l   packet_SIZE(a4),a0
+     move.l   p_Buffer(a4),a0
      move.w   p_Size(a4),d0
      jsr      _CRC16(pc)
      move.w   d0,p_CRC(a4)
@@ -201,7 +202,7 @@ hww_cont2:
      ; now send data buffer
      move.w   p_Size(a4),d6
      subq     #1,d6
-     move.l   (a3),a3                             ; fetch buffer pointer
+     move.l   p_Buffer(a4),a3                     ; fetch buffer pointer
 
 hww_MainLoop:
      move.b   (a3)+,OutReg                        ; WRITECIA *p++
@@ -259,10 +260,6 @@ _hwrecv:
      moveq    #HS_LINE,d2                         ; d2 = HS_LINE
      lea      StatusReg,a5                        ; a5 = StatusReg
 
-     ; copy current size to state
-     move.w   p_Size(a4),d6
-     move.w   d6,s_MaxPacketSize(a2)
-
      moveq    #CIAICRF_FLG,d0
      JSRLIB   AbleICR                             ; DISABLEINT
      
@@ -293,7 +290,7 @@ hwr_cont1:
      
      ; read header
      lea      p_Size(a4),a3
-     moveq    #packet_SIZE-3,d6                   ; skip MAGIC 
+     moveq    #packet_SIZE-3,d6                   ; skip MAGIC word
 
 hwr_HeaderLoop:
 hwr_LoopShake2:
@@ -313,11 +310,11 @@ hwr_cont2:
 
      ; check incoming size
      move.w   p_Size(a4),d6
-     cmp.w    s_MaxPacketSize(a2),d6
+     cmp.w    p_BufferSize(a4),d6
      bhi.s    hwr_TimedOut
      
      ; Read main packet body
-     move.l   (a3),a3                             ; fetch buffer pointer
+     move.l   p_Buffer(a4),a3                     ; fetch buffer pointer
      subq     #1,d6
 
 hwr_MainLoop:
@@ -341,18 +338,21 @@ hwr_DoneRead:
      bne.s    hwr_ReadOkay
 
      ; do CRC check
-     move.l   packet_SIZE(a4),a0
+     move.l   p_Buffer(a4),a0
      move.w   p_Size(a4),d0
      jsr      _CRC16(pc)
      cmp.w    p_CRC(a4),d0
      beq.s    hwr_ReadOkay
+
+hwr_CRCError:
      moveq    #2,d5
-     bra.s    hwr_TimedOut
+     bra.s    hwr_End
 hwr_ReadOkay:
      moveq    #TRUE,d5
 hwr_TimedOut:
+hwr_End:
      bclr     #FLAGS_BIT_RX,s_Flags(a2)
-     
+
      SETCIAINPUT
      
      bclr     d3,(a5)                             ; CLEARREQUEST StatusReg

@@ -8,7 +8,6 @@ struct state_s {
     ULONG     s_IntSigMask;
     struct Library * s_SysBase;
     struct Task    * s_ServerTask;
-    UWORD     s_MaxPacketSize;
     UBYTE     s_UseCRC;
     UBYTE     s_TimeOut;
 };
@@ -20,12 +19,14 @@ struct state_s {
 #define FLAGS_MASK_ACK      (1<<FLAGS_BIT_ACK)
 
 struct par_packet_s {
-    UWORD     p_Sync;
-    UWORD     p_Size;
-    UWORD     p_CRC;
-    
-    UBYTE *   p_Buffer;     /* data buffer to be transferred */
-    int       p_Result;     /* transfer result */
+    /* this is the header sent on wire */
+    UWORD     p_Sync;       /* set by pario: 0x4201 or 0x4202 = NOCRC | CRC */
+    UWORD     p_Size;       /* user: size to be sent or size that was read */
+    UWORD     p_CRC;        /* set by pario: CRC16 or 0 if disabled */
+    /* this additional info is only local */
+    UWORD     p_BufferSize; /* user: max size to be filled by read */
+    UBYTE *   p_Buffer;     /* user: data buffer to be transferred */
+    int       p_Result;     /* returned: transfer result */
 };
 
 typedef struct par_packet_s par_packet_t;
@@ -45,7 +46,7 @@ typedef struct par_packet_s par_packet_t;
 #define PAR_INIT_NO_PARBITS_RES 3
 #define PAR_INIT_NO_CIA_IRQ     4
 
-extern int par_init(UWORD maxPacketSize, UBYTE useCRC);
+extern int par_init(UBYTE useCRC);
 extern void par_shutdown(void);
 extern ULONG par_get_rx_sig_mask(void);
 extern int par_send(struct par_packet_s *pkt);

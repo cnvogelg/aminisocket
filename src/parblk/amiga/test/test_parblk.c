@@ -144,6 +144,7 @@ int main(int argc, char **argv)
             switch(argv[i][1]) {
                 case 't':
                     tx_start = TRUE;
+                    break;
                 case 'b':
                     size = atoi(argv[i+1]);
                     i++;
